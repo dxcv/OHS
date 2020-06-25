@@ -7,6 +7,7 @@ from py_vollib.black_scholes_merton.greeks.analytical import vega as bsm_vega
 
 from typing import List, Dict
 from pandas import DataFrame as pd_DataFrame
+from pandas import Series as pd_Series
 
 from utils import _vec, _no_except
 
@@ -47,6 +48,11 @@ def _bsm_vega(*args, **kwargs):
     return bsm_vega(*args, **kwargs)
 
 
+def iv2md_vol(tdf: pd_DataFrame) -> pd_Series:
+    # TODO: use a model to calculate modle iv
+    return tdf["mkt_iv"]
+
+
 def gen_p_iv_gks_dct(d_tkr_lst: List, d_p_df: pd_DataFrame, u_p_df: pd_DataFrame, d_tkr2info: Dict) \
         -> Dict[str, pd_DataFrame]:
 
@@ -57,10 +63,12 @@ def gen_p_iv_gks_dct(d_tkr_lst: List, d_p_df: pd_DataFrame, u_p_df: pd_DataFrame
         tdf = d_p_df.loc[:, [d, "tao", "r", "q"]].join(u_p_df[ud_tkr], how="left")
         tdf["tp"] = tp
         tdf["K"] = K
-        tdf["iv"] = sigma = _bsm_iv(tdf[d].values, S := tdf[ud_tkr].values, K,
+        tdf["mkt_iv"] = _bsm_iv(tdf[d].values, S := tdf[ud_tkr].values, K,
                             tao := tdf["tao"].values, r := tdf["r"].values, q := tdf["q"].values, tp)
 
-        tdf.columns = ["d_p", "tao", "r", "q", "u_p", "tp", "K", "iv"]
+        tdf["md_iv"] = sigma = iv2md_vol(tdf)
+
+        tdf.columns = ["d_p", "tao", "r", "q", "u_p", "tp", "K", "mkt_iv", "md_iv"]
 
         tdf["delta"] = _bsm_delta(tp, S, K, tao, r, sigma, q)
         tdf["gamma"] = _bsm_gamma(tp, S, K, tao, r, sigma, q)
@@ -71,16 +79,3 @@ def gen_p_iv_gks_dct(d_tkr_lst: List, d_p_df: pd_DataFrame, u_p_df: pd_DataFrame
         d_p_dct[d] = tdf
 
     return d_p_dct
-
-
-if __name__ == "__main__":
-    from data_preprocsssing import *
-
-    d_df, d_tkr2info = load_derivatives_df_n_cast()
-    d_op_df, u_op_df, d_cp_df, u_cp_df = get_mkt_data(d_df)
-    d_t_df = add_info2p_df(d_op_df)
-
-    p_iv_dct = gen_p_iv_gks_dct(d_df["d_code"], d_t_df, u_op_df, d_tkr2info)
-    tkr = '10002238.SH'
-    tdf = p_iv_dct[tkr]
-    print(1)
