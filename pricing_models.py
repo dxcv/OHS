@@ -5,6 +5,9 @@ from py_vollib.black_scholes_merton.greeks.analytical import rho as bsm_rho
 from py_vollib.black_scholes_merton.greeks.analytical import theta as bsm_theta
 from py_vollib.black_scholes_merton.greeks.analytical import vega as bsm_vega
 
+from typing import List, Dict
+from pandas import DataFrame as pd_DataFrame
+
 from utils import _vec, _no_except
 
 
@@ -44,12 +47,13 @@ def _bsm_vega(*args, **kwargs):
     return bsm_vega(*args, **kwargs)
 
 
-def gen_p_iv_gks_dct(d_tkr_lst, d_p_df, u_p_df, d_tkr2info):
+def gen_p_iv_gks_dct(d_tkr_lst: List, d_p_df: pd_DataFrame, u_p_df: pd_DataFrame, d_tkr2info: Dict) \
+        -> Dict[str, pd_DataFrame]:
+
     d_p_dct = {}
 
     for d in d_tkr_lst:
-        tp, K = d_tkr2info[d].values()
-        ud_tkr = d_df["u_code"][0]
+        tp, K, ud_tkr = d_tkr2info[d].values()
         tdf = d_p_df.loc[:, [d, "tao", "r", "q"]].join(u_p_df[ud_tkr], how="left")
         tdf["tp"] = tp
         tdf["K"] = K
@@ -73,8 +77,10 @@ if __name__ == "__main__":
     from data_preprocsssing import *
 
     d_df, d_tkr2info = load_derivatives_df_n_cast()
-    d_p_df, u_p_df = get_mkt_data(d_df)
-    d_p_df = add_date_to_exp(d_p_df)
+    d_op_df, u_op_df, d_cp_df, u_cp_df = get_mkt_data(d_df)
+    d_t_df = add_info2p_df(d_op_df)
 
-    p_iv_dct = gen_p_iv_gks_dct(d_df["d_code"], d_p_df, u_p_df, d_tkr2info)
+    p_iv_dct = gen_p_iv_gks_dct(d_df["d_code"], d_t_df, u_op_df, d_tkr2info)
+    tkr = '10002238.SH'
+    tdf = p_iv_dct[tkr]
     print(1)
