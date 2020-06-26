@@ -1,12 +1,22 @@
-from utils import _vec
-from math import log
-from functools import lru_cache, partial
+from functools import partial
 from numpy import array as np_array
 from numpy import inf as np_inf
+from math import log
 from scipy.optimize import least_squares
 
+from utils import _vec
 
-class WingModel(object):
+
+class AbstractVolModel(object):
+
+    def fit(self, iv_ar, K):
+        raise NotImplementedError("fit")
+
+    def predict(self, K):
+        raise NotImplementedError("K")
+
+
+class WingModel(AbstractVolModel):
 
     """
     Ref: http://sourceforge.net/p/quantlib/mailman/attachment/SNT147-DS14C62FD328A11C206965D6AED90%40phx.gbl/1/
@@ -47,22 +57,22 @@ class WingModel(object):
             return pfunc(*w) - iv_ar
 
         self.atm_f, self.ssr, self.vol_ref, self.vcr, self.slp_ref, self.scr, self.pt_crv, self.cl_crv, self.dn_ctof, \
-        self.up_ctof, self.dn_smrg, self.up_smrg, self.p_ref = w_rst = least_squares(tgt_func, w_0,
-                                                                                     bounds=[
-                                                                                         (0.0, 0.0, 0.0, -np_inf,
-                                                                                          -np_inf, -np_inf, -np_inf,
-                                                                                          -np_inf, -np_inf, 0.0, 0.0,
-                                                                                          0.0, 0.0),
-                                                                                         (np_inf, 100.0, np_inf, np_inf,
-                                                                                          np_inf, np_inf, np_inf,
-                                                                                          np_inf, 0.0, np_inf, np_inf,
-                                                                                          np_inf, np_inf)]).x
+        self.up_ctof, self.dn_smrg, self.up_smrg, self.p_ref = least_squares(tgt_func, w_0,
+                                                                             bounds=[(0.0, 0.0, 0.0, -np_inf,
+                                                                                     -np_inf, -np_inf, -np_inf,
+                                                                                     -np_inf, -np_inf, 0.0, 0.0,
+                                                                                     0.0, 0.0),
+                                                                                     (np_inf, 100.0, np_inf, np_inf,
+                                                                                     np_inf, np_inf, np_inf,
+                                                                                     np_inf, 0.0, np_inf, np_inf,
+                                                                                     np_inf, np_inf)
+                                                                                     ]
+                                                                             ).x
 
         return self
 
     @staticmethod
     @_vec
-    @lru_cache(maxsize=8192)
     def _predict(atm_f, ssr, vol_ref, vcr, slp_ref, scr, pt_crv, cl_crv,
                 dn_ctof, up_ctof, dn_smrg, up_smrg, p_ref, K):
 
@@ -93,28 +103,28 @@ class WingModel(object):
                              self.cl_crv, self.dn_ctof, self.up_ctof, self.dn_smrg, self.up_smrg, self.p_ref, K)
 
 
-if __name__ == "__main__":
-    from data_preprocsssing import *
-    from pricing_models import *
-    from hedging_strategies import *
-    import numpy as np
-    import pandas as pd
-
-    d_df, d_tkr2info = load_derivatives_df_n_cast()
-    d_op_df, u_op_df, d_cp_df, u_cp_df = get_mkt_data_minutes(d_df)
-    d_t_df = add_info2p_df(d_op_df)
-
-    op_iv_dct = gen_p_iv_gks_dct(d_df["d_code"], d_t_df, u_op_df, d_tkr2info)
-
-    op_tkrs = d_df[d_df.lst_dt == pd.to_datetime("2020-09-23")].d_code
-
-    tdf = pd.DataFrame(data=[op_iv_dct[tkr].iloc[-100, :] for tkr in op_tkrs], index=op_tkrs).loc[:,
-          ["K", "mkt_iv", "tp"]]
-    tdf.sort_values("K", inplace=True)
-
-    cdf = tdf[tdf.tp == "c"].dropna()
-    pdf = tdf[tdf.tp == "p"].dropna()
-
-    mdl = WingModel(2.9, 2.9, vol_ref=0.5)
-
-    mdl.fit(pdf.mkt_iv.values, pdf.K.values)
+# if __name__ == "__main__":
+#     from data_preprocsssing import *
+#     from pricing_models import *
+#     from hedging_strategies import *
+#     import numpy as np
+#     import pandas as pd
+#
+#     d_df, d_tkr2info = load_derivatives_df_n_cast()
+#     d_op_df, u_op_df, d_cp_df, u_cp_df = get_mkt_data_minutes(d_df)
+#     d_t_df = add_info2p_df(d_op_df)
+#
+#     op_iv_dct = gen_p_iv_gks_dct(d_df["d_code"], d_t_df, u_op_df, d_tkr2info)
+#
+#     op_tkrs = d_df[d_df.lst_dt == pd.to_datetime("2020-09-23")].d_code
+#
+#     tdf = pd.DataFrame(data=[op_iv_dct[tkr].iloc[-100, :] for tkr in op_tkrs], index=op_tkrs).loc[:,
+#           ["K", "mkt_iv", "tp"]]
+#     tdf.sort_values("K", inplace=True)
+#
+#     cdf = tdf[tdf.tp == "c"].dropna()
+#     pdf = tdf[tdf.tp == "p"].dropna()
+#
+#     mdl = WingModel(2.9, 2.9, vol_ref=0.5)
+#
+#     mdl.fit(pdf.mkt_iv.values, pdf.K.values)
