@@ -54,7 +54,7 @@ def optimize_one_day(i: int, op_ct_func, pw_mat: np_ndarray, o_cub: np_ndarray, 
 
 def calc_hedge_w_n_expo(op_iv_dct: Dict[str, pd_DataFrame], u_p_df: pd_DataFrame, pw_mat: np_ndarray,
                         rsk_tgt_mat: np_ndarray, hg_tools: Iterable = (-1,),
-                        rsk_msk: Iterable = (False, True, True, False, False, True)) \
+                        rsk_msk: Iterable = (False, True, False, False, False, False)) \
         -> Tuple[pd_DataFrame, pd_DataFrame]:
 
     o_cub, cols = gen_risk_metrics(op_iv_dct, u_p_df)
