@@ -1,6 +1,6 @@
 """
-two usage:
-1. exotic hedging strategy search
+two usages:
+1. exotic hedging strategy research
 2. volatility portfolio management
 """
 
@@ -22,7 +22,8 @@ if __name__ == '__main__':
     # pw_mat: (inst count + 1, bars, 1)
     pw_mat = -1 * np.ones((d_op_df.shape[1] + 1, d_op_df.shape[0], 1), dtype=float)
     pw_mat[-1, :, 0] = 0.0
-    w_df, hr_df = calc_hedge_w_n_expo(op_iv_dct, u_op_df, pw_mat, range(87))
+    rsk_tgt_mat = np.zeros((d_op_df.shape[0], 3), dtype=float)
+    w_df, hr_df = calc_hedge_w_n_expo(op_iv_dct, u_op_df, pw_mat, rsk_tgt_mat, range(87))
     pw_pnl_df, hg_pnl_df = calc_portfolio_pnl(w_df, d_op_df, u_op_df, pw_mat)
 
     print(1)

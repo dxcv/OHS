@@ -5,7 +5,7 @@ from py_vollib.black_scholes_merton.greeks.analytical import rho as bsm_rho
 from py_vollib.black_scholes_merton.greeks.analytical import theta as bsm_theta
 from py_vollib.black_scholes_merton.greeks.analytical import vega as bsm_vega
 
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from pandas import DataFrame as pd_DataFrame
 from pandas import Series as pd_Series
 
@@ -56,10 +56,11 @@ def iv2md_vol(tdf: pd_DataFrame) -> pd_Series:
 def gen_p_iv_gks_dct(d_tkr_lst: List, d_p_df: pd_DataFrame, u_p_df: pd_DataFrame, d_tkr2info: Dict) \
         -> Dict[str, pd_DataFrame]:
 
-    d_p_dct = {}
+    p_iv_dct = {}
 
     for d in d_tkr_lst:
-        tp, K, ud_tkr = d_tkr2info[d].values()
+        tdct = d_tkr2info[d]
+        tp, K, ud_tkr = tdct["type"], tdct["K"], tdct["u_code"]
         tdf = d_p_df.loc[:, [d, "tao", "r", "q"]].join(u_p_df[ud_tkr], how="left")
         tdf["tp"] = tp
         tdf["K"] = K
@@ -76,6 +77,10 @@ def gen_p_iv_gks_dct(d_tkr_lst: List, d_p_df: pd_DataFrame, u_p_df: pd_DataFrame
         tdf["theta"] = _bsm_theta(tp, S, K, tao, r, sigma, q)
         tdf["vega"] = _bsm_vega(tp, S, K, tao, r, sigma, q)
 
-        d_p_dct[d] = tdf
+        p_iv_dct[d] = tdf
 
-    return d_p_dct
+    return p_iv_dct
+
+
+def construct_vol_suface(p_iv_dct: Dict[str, pd_DataFrame]) -> Tuple[pd_DataFrame]:
+    pass

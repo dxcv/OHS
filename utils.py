@@ -1,6 +1,19 @@
 from numpy import vectorize as np_vc
 from numpy import float64 as np_float64
 from numpy import nan as np_nan
+from multiprocessing import Pool
+
+
+POOL = None
+
+
+def pool_init(core_count=8):
+    global POOL
+
+    if POOL is None:
+        POOL = Pool(core_count)
+
+    return POOL
 
 
 def _no_except(func):

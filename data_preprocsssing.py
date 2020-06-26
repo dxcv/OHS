@@ -16,7 +16,7 @@ def load_derivatives_df_n_cast() -> Tuple[pd_DataFrame, Dict]:
     d_df.columns = D_DF_COLS
     d_df["lst_dt"] = pd_DatetimeIndex(d_df["lst_dt"])
     d_df["type"] = d_df["name"].apply(lambda x: "c" if "购" in x else "p")
-    return d_df, d_df.loc[:, ["d_code", "type", "K", "u_code"]].set_index("d_code").T.to_dict()
+    return d_df, d_df.set_index("d_code").T.to_dict()
 
 
 def get_mkt_data_days(d_df: pd_DataFrame) -> Tuple[pd_DataFrame, pd_DataFrame, pd_DataFrame, pd_DataFrame]:
